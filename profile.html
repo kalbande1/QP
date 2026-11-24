@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>माझे प्रोफाईल व प्रगती आलेख | महाराष्ट्र पोलीस भरती परीक्षा पोर्टल</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts & Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- १. नेव्हिगेशन हेडर -->
+    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <a href="dashboard.html" class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-lg shadow-md">
+                    <i class="fa-solid fa-id-badge"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight text-white">विद्यार्थी प्रोफाईल</h1>
+                    <p class="text-[11px] text-amber-300 font-medium">कामगिरी व प्रगती विश्लेषण</p>
+                </div>
+            </a>
+
+            <!-- नेव्हिगेशन बटने -->
+            <div class="flex items-center space-x-3">
+                <a href="dashboard.html" class="px-3.5 py-1.5 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold transition text-xs flex items-center shadow-sm">
+                    <i class="fa-solid fa-file-pen mr-1.5"></i> सराव पेपर्स
+                </a>
+                <button onclick="Auth.logout()" class="px-3 py-1.5 rounded-lg bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-800 transition text-xs font-semibold flex items-center">
+                    <i class="fa-solid fa-power-off sm:mr-1"></i>
+                    <span class="hidden sm:inline">लॉगआउट</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- २. मुख्य प्रोफाईल कन्टेन्ट -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- १. प्रोफाईल माहिती कार्ड (Profile Hero Card) -->
+        <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl border border-slate-800">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-amber-500/20 text-amber-400 border-2 border-amber-400/40 flex items-center justify-center text-3xl sm:text-4xl shadow-inner shrink-0">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div>
+                        <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-semibold mb-1 border border-amber-500/30">
+                            <i class="fa-solid fa-shield-halved text-amber-400"></i>
+                            <span id="profileBhartiType">जिल्हा पोलीस भरती</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white" id="profileFullName">
+                            लोड होत आहे...
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300 mt-1.5">
+                            <span><i class="fa-solid fa-phone text-amber-400 mr-1"></i> <b id="profileMobile">--</b></span>
+                            <span>•</span>
+                            <span><i class="fa-solid fa-envelope text-amber-400 mr-1"></i> <span id="profileEmail">--</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-xs text-slate-400 self-start md:self-auto">
+                    नोंदणी तारीख: <b id="profileJoinDate" class="text-slate-200">--</b>
+                </div>
+            </div>
+
+            <!-- ४ मुख्य सरासरी आकडे -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-slate-800/80">
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase">एकूण सोडवलेले पेपर्स</div>
+                    <div class="text-2xl font-extrabold text-white mt-1" id="statProfAttempts">०</div>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase">सरासरी गुण</div>
+                    <div class="text-2xl font-extrabold text-amber-400 mt-1" id="statProfAvg">०%</div>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase">सर्वोत्तम स्कोर</div>
+                    <div class="text-2xl font-extrabold text-emerald-400 mt-1" id="statProfBest">०</div>
+                </div>
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+                    <div class="text-[11px] text-slate-400 font-bold uppercase">एकूण अचूकता</div>
+                    <div class="text-2xl font-extrabold text-blue-400 mt-1" id="statProfAcc">०%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- २. प्रगती आलेख विभाग (Progress Charts) -->
+        <div id="chartsSection" class="space-y-4 hidden">
+            <h3 class="text-xl font-extrabold text-slate-900 flex items-center">
+                <i class="fa-solid fa-chart-line text-blue-600 mr-2.5"></i>
+                कामगिरी व प्रगती आलेख
+            </h3>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- आलेख १: पेपरनिहाय प्रगती (Line Chart) -->
+                <div class="police-card p-6 bg-white border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-900 mb-1 flex items-center">
+                        <i class="fa-solid fa-arrow-trend-up text-emerald-600 mr-2"></i>
+                        पेपरनिहाय प्रगती आलेख (Score Progression)
+                    </h4>
+                    <p class="text-[11px] text-slate-500 mb-4">प्रत्येक पेपरनुसार गुणांमधील वाढ किंवा घट दर्शवणारा आलेख</p>
+                    <div class="relative h-64">
+                        <canvas id="lineProgressionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- आलेख २: विषयनिहाय सरासरी अचूकता (Bar Chart) -->
+                <div class="police-card p-6 bg-white border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-900 mb-1 flex items-center">
+                        <i class="fa-solid fa-chart-column text-purple-600 mr-2"></i>
+                        विषयनिहाय सरासरी अचूकता (Subject Accuracy)
+                    </h4>
+                    <p class="text-[11px] text-slate-500 mb-4">सर्व पेपर्समधील मराठी, गणित, बुद्धिमत्ता व चालू घडामोडी अचूकता</p>
+                    <div class="relative h-64">
+                        <canvas id="barSubjectAvgChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- जर २ पेपर्स पूर्ण नसतील तर सूचना कार्ड -->
+        <div id="chartsEmptyNotice" class="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+            <i class="fa-solid fa-chart-pie text-4xl text-slate-300 mb-3"></i>
+            <h4 class="text-sm font-bold text-slate-700">प्रगतीचा आलेख पाहण्यासाठी किमान २ पेपर्स सोडवा.</h4>
+            <p class="text-xs text-slate-500 mt-1 mb-4">तुम्ही जितके जास्त पेपर्स सोडवाल तितके अचूक विश्लेषण तुम्हाला मिळेल.</p>
+            <a href="dashboard.html" class="inline-flex items-center px-4 py-2 rounded-xl bg-blue-700 text-white font-bold text-xs shadow-md">
+                सराव पेपर सुरू करा
+            </a>
+        </div>
+
+        <!-- ३. सोडवलेल्या सर्व पेपर्सचा इतिहास (Attempt History Table) -->
+        <div class="police-card p-6 bg-white border border-slate-200">
+            <h3 class="text-lg font-extrabold text-slate-900 mb-4 flex items-center">
+                <i class="fa-solid fa-clock-rotate-left text-amber-500 mr-2"></i>
+                सोडवलेल्या सर्व पेपर्सचा इतिहास
+            </h3>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-600 border border-slate-200 rounded-lg">
+                    <thead class="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                        <tr>
+                            <th class="p-3">पेपरचे नाव</th>
+                            <th class="p-3">सोडवल्याची तारीख</th>
+                            <th class="p-3 text-center font-bold">प्राप्त गुण</th>
+                            <th class="p-3 text-center">टक्केवारी</th>
+                            <th class="p-3 text-center">लागलेला वेळ</th>
+                            <th class="p-3 text-right">सविस्तर निकाल</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                        <tr><td colspan="6" class="p-6 text-center text-slate-400">इतिहास लोड होत आहे...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ४. फूटर -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800">
+        महाराष्ट्र पोलीस भरती सराव परीक्षा पोर्टल &copy; २०२५-२०२६.
+    </footer>
+
+    <!-- Supabase आणि स्क्रिप्ट्स -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+        const student = Auth.protectPage('student');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (student) {
+                document.getElementById('profileFullName').textContent = student.full_name;
+                document.getElementById('profileBhartiType').textContent = student.bharti_type || 'जिल्हा पोलीस भरती';
+                document.getElementById('profileMobile').textContent = student.mobile;
+                document.getElementById('profileEmail').textContent = student.email || '-';
+                document.getElementById('profileJoinDate').textContent = new Date(student.created_at || Date.now()).toLocaleDateString('mr-IN');
+            }
+
+            await loadProfileData();
+        });
+
+        async function loadProfileData() {
+            try {
+                const attempts = await DB.getStudentAttempts(student.id);
+
+                document.getElementById('statProfAttempts').textContent = attempts.length;
+
+                if (attempts.length === 0) {
+                    document.getElementById('historyTableBody').innerHTML = `
+                        <tr><td colspan="6" class="p-8 text-center text-slate-400">अजून एकही पेपर सोडवलेला नाही.</td></tr>
+                    `;
+                    return;
+                }
+
+                // सारांश आकडेवारी
+                const avgPct = Math.round(attempts.reduce((sum, a) => sum + Number(a.percentage || 0), 0) / attempts.length);
+                const bestScore = Math.max(...attempts.map(a => Number(a.total_score || 0)));
+
+                const totalCorrect = attempts.reduce((sum, a) => sum + Number(a.correct_count || 0), 0);
+                const totalWrong = attempts.reduce((sum, a) => sum + Number(a.wrong_count || 0), 0);
+                const overallAcc = (totalCorrect + totalWrong > 0) ? Math.round((totalCorrect / (totalCorrect + totalWrong)) * 100) : 0;
+
+                document.getElementById('statProfAvg').textContent = avgPct + '%';
+                document.getElementById('statProfBest').textContent = bestScore;
+                document.getElementById('statProfAcc').textContent = overallAcc + '%';
+
+                // २ पेपर्सपेक्षा जास्त असल्यास आलेख दाखवणे
+                if (attempts.length >= 2) {
+                    document.getElementById('chartsEmptyNotice').classList.add('hidden');
+                    document.getElementById('chartsSection').classList.remove('hidden');
+                    renderProgressionCharts(attempts);
+                }
+
+                // इतिहास टेबल
+                renderHistoryTable(attempts);
+
+            } catch (err) {
+                console.error("प्रोफाईल लोड त्रुटी:", err);
+            }
+        }
+
+        function renderProgressionCharts(attempts) {
+            // १. लाइन चार्ट: कालक्रमानुसार (उलट क्रम: जुन्यापासून नवीनकडे)
+            const chronologicalAttempts = [...attempts].reverse();
+            const labels = chronologicalAttempts.map((a, i) => `पेपर ${i + 1}`);
+            const scores = chronologicalAttempts.map(a => a.total_score);
+
+            const ctxLine = document.getElementById('lineProgressionChart');
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'प्राप्त गुण',
+                        data: scores,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // २. बार चार्ट: सर्व पेपर्समधील सरासरी विषय अचूकता
+            const subTotals = {};
+            attempts.forEach(a => {
+                const analysis = a.subject_analysis_json || {};
+                Object.keys(analysis).forEach(sub => {
+                    if (!subTotals[sub]) subTotals[sub] = { correct: 0, total: 0 };
+                    subTotals[sub].correct += analysis[sub].correct || 0;
+                    subTotals[sub].total += analysis[sub].total || 0;
+                });
+            });
+
+            const subLabels = Object.keys(subTotals);
+            const subAverages = subLabels.map(s => {
+                const item = subTotals[s];
+                return item.total > 0 ? Math.round((item.correct / item.total) * 100) : 0;
+            });
+
+            const ctxBar = document.getElementById('barSubjectAvgChart');
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: subLabels.map(l => l.length > 12 ? l.substring(0, 12) + '..' : l),
+                    datasets: [{
+                        label: 'सरासरी अचूकता (%)',
+                        data: subAverages,
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { callback: v => v + '%' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHistoryTable(attempts) {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = attempts.map(a => {
+                const mins = Math.floor(a.time_taken_seconds / 60);
+                const secs = a.time_taken_seconds % 60;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 font-bold text-slate-900">${escapeHtml(a.paper?.title || 'सराव पेपर')}</td>
+                        <td class="p-3 text-slate-500">${new Date(a.created_at).toLocaleDateString('mr-IN')} ${new Date(a.created_at).toLocaleTimeString('mr-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+                        <td class="p-3 text-center font-black text-blue-700">${a.total_score} / ${a.total_questions}</td>
+                        <td class="p-3 text-center font-bold text-emerald-700">${a.percentage}%</td>
+                        <td class="p-3 text-center font-mono text-slate-500">${mins}m ${secs}s</td>
+                        <td class="p-3 text-right">
+                            <a href="report.html?attempt_id=${a.id}" class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold transition text-xs inline-flex items-center">
+                                निकाल उघडा <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
