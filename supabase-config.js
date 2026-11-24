@@ -7,8 +7,8 @@
 
 // १. डीफॉल्ट Supabase क्रेडेन्शियल्स (येथे तुमची Supabase URL व Anon Key टाका)
 // किंवा ॲडमिन पॅनेलमध्ये 'Supabase सेटिंग्ज' मधून थेट ब्राउझरमध्ये सेव्ह करा.
-const DEFAULT_SUPABASE_URL = "https://your-project-id.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY = "your-supabase-anon-key";
+const DEFAULT_SUPABASE_URL = "https://gcyakfdswgyofxznpwki.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_WmaMn7M5GdC0lEhW7lBwzw_AF7DRgbb";
 
 // LocalStorage मधून किंवा डीफॉल्टमधून URL व Key मिळवणे
 const SUPABASE_URL = localStorage.getItem('pyq_supabase_url') || DEFAULT_SUPABASE_URL;
