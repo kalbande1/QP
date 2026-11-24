@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ॲडमिन पॅनेल | महाराष्ट्र पोलीस भरती परीक्षा पोर्टल</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts & Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- १. ॲडमिन मुख्य हेडर -->
+    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xl shadow-md border-2 border-amber-300">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base sm:text-lg leading-tight tracking-wide text-white">
+                        पोलीस भरती ॲडमिन पॅनेल
+                    </h1>
+                    <div class="flex items-center space-x-2 text-xs text-slate-400">
+                        <span id="supabaseStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+                            डेटाबेस सक्रिय
+                        </span>
+                        <span class="hidden sm:inline">|</span>
+                        <span class="text-amber-300 font-medium" id="adminName">मुख्य प्रशासक</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- हेडर कृती बटने -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Supabase सेटिंग्ज बटन -->
+                <button 
+                    onclick="openSupabaseModal()" 
+                    title="Supabase URL व Key सेटिंग्ज"
+                    class="px-2.5 py-1.5 sm:px-3 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-700 transition flex items-center"
+                >
+                    <i class="fa-solid fa-gear mr-1 text-amber-400"></i>
+                    <span class="hidden sm:inline">Supabase सेटिंग्ज</span>
+                </button>
+
+                <!-- विद्यार्थी डॅशबोर्ड लिंक -->
+                <a 
+                    href="dashboard.html" 
+                    target="_blank"
+                    class="px-2.5 py-1.5 sm:px-3 text-xs font-semibold rounded-lg bg-blue-900/60 text-blue-200 hover:bg-blue-800 border border-blue-700/60 transition flex items-center"
+                >
+                    <i class="fa-solid fa-eye mr-1"></i>
+                    <span class="hidden sm:inline">विद्यार्थी व्ह्यू</span>
+                </a>
+
+                <!-- लॉगआउट -->
+                <button 
+                    onclick="Auth.logout()" 
+                    class="px-2.5 py-1.5 sm:px-3 text-xs font-semibold rounded-lg bg-red-950/80 text-red-200 hover:bg-red-900 border border-red-800 transition flex items-center"
+                >
+                    <i class="fa-solid fa-power-off sm:mr-1"></i>
+                    <span class="hidden sm:inline">लॉगआउट</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- २. ॲडमिन नेव्हिगेशन टॅब्स (Tab Bar) -->
+        <div class="bg-slate-950 border-t border-slate-800/80 px-4 sm:px-6 lg:px-8 overflow-x-auto">
+            <div class="max-w-7xl mx-auto flex space-x-1 sm:space-x-2 py-1.5 min-w-max text-xs sm:text-sm font-semibold">
+                <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="admin-tab-btn active px-3.5 py-2 rounded-lg text-white bg-slate-800 flex items-center">
+                    <i class="fa-solid fa-chart-pie mr-2 text-amber-400"></i> डॅशबोर्ड
+                </button>
+                <button onclick="switchTab('students')" id="tabBtn-students" class="admin-tab-btn px-3.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 flex items-center">
+                    <i class="fa-solid fa-users mr-2 text-blue-400"></i> विद्यार्थी व मंजुरी
+                    <span id="tabPendingBadge" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-amber-500 text-slate-950 hidden">०</span>
+                </button>
+                <button onclick="switchTab('papers')" id="tabBtn-papers" class="admin-tab-btn px-3.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 flex items-center">
+                    <i class="fa-solid fa-file-lines mr-2 text-emerald-400"></i> पेपर्स व्यवस्थापन
+                </button>
+                <button onclick="switchTab('csvUpload')" id="tabBtn-csvUpload" class="admin-tab-btn px-3.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 flex items-center">
+                    <i class="fa-solid fa-file-csv mr-2 text-amber-400"></i> CSV प्रश्न अपलोड
+                </button>
+                <button onclick="switchTab('questions')" id="tabBtn-questions" class="admin-tab-btn px-3.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 flex items-center">
+                    <i class="fa-solid fa-circle-question mr-2 text-purple-400"></i> प्रश्न व इमेज व्यवस्थापन
+                </button>
+                <button onclick="switchTab('flags')" id="tabBtn-flags" class="admin-tab-btn px-3.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 flex items-center">
+                    <i class="fa-solid fa-triangle-exclamation mr-2 text-rose-400"></i> तक्रारी व शंका
+                    <span id="tabFlagsBadge" class="ml-1.5 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-rose-500 text-white hidden">०</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ३. मुख्य ॲडमिन बॉडी कन्टेन्ट -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ============================================================ -->
+        <!-- टॅब १: डॅशबोर्ड ओव्हरव्ह्यू (Dashboard Overview) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-dashboard" class="space-y-6">
+            <!-- ५ मुख्य आकडेवारी कार्ड्स -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- १. एकूण विद्यार्थी -->
+                <div class="police-card p-5 bg-white border-l-4 border-blue-600">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
+                        <span>एकूण विद्यार्थी</span>
+                        <i class="fa-solid fa-users text-blue-600 text-lg"></i>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2" id="statTotalStudents">--</div>
+                    <p class="text-[11px] text-slate-500 mt-1">नोंदणीकृत परीक्षार्थी</p>
+                </div>
+
+                <!-- २. मंजुरी प्रलंबित -->
+                <div class="police-card p-5 bg-white border-l-4 border-amber-500">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
+                        <span>मंजुरी प्रलंबित</span>
+                        <i class="fa-solid fa-user-clock text-amber-500 text-lg"></i>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-2" id="statPendingApprovals">--</div>
+                    <p class="text-[11px] text-amber-700 mt-1 font-semibold">ॲडमिन मंजुरी आवश्यक</p>
+                </div>
+
+                <!-- ३. एकूण पेपर्स -->
+                <div class="police-card p-5 bg-white border-l-4 border-emerald-600">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
+                        <span>एकूण पेपर्स</span>
+                        <i class="fa-solid fa-file-invoice text-emerald-600 text-lg"></i>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2" id="statTotalPapers">--</div>
+                    <p class="text-[11px] text-slate-500 mt-1">सराव पेपर संच</p>
+                </div>
+
+                <!-- ४. सोडवलेले पेपर्स -->
+                <div class="police-card p-5 bg-white border-l-4 border-indigo-600">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
+                        <span>सोडवलेले पेपर्स</span>
+                        <i class="fa-solid fa-square-check text-indigo-600 text-lg"></i>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2" id="statTotalAttempts">--</div>
+                    <p class="text-[11px] text-slate-500 mt-1">एकूण सोडवलेले संच</p>
+                </div>
+
+                <!-- ५. प्रलंबित शंका -->
+                <div class="police-card p-5 bg-white border-l-4 border-rose-600 col-span-2 lg:col-span-1">
+                    <div class="flex items-center justify-between text-slate-500 text-xs font-bold uppercase">
+                        <span>प्रलंबित शंका</span>
+                        <i class="fa-solid fa-flag text-rose-600 text-lg"></i>
+                    </div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-rose-600 mt-2" id="statPendingFlags">--</div>
+                    <p class="text-[11px] text-rose-700 mt-1 font-semibold">विद्यार्थ्यांच्या तक्रारी</p>
+                </div>
+            </div>
+
+            <!-- जलद कृती पॅनेल (Quick Actions) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- १. नवीन पेपर तयार करा -->
+                <div class="police-card p-6 bg-gradient-to-br from-blue-900 to-slate-900 text-white">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    <h3 class="text-lg font-bold">नवीन सराव पेपर तयार करा</h3>
+                    <p class="text-xs text-slate-300 mt-1 mb-4">
+                        पेपरचे नाव, वेळ, शफलिंग व रँक सेटिंग्जसह नवीन पेपर संच जोडा.
+                    </p>
+                    <button onclick="openPaperModal()" class="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition">
+                        + नवीन पेपर तयार करा
+                    </button>
+                </div>
+
+                <!-- २. CSV अपलोड करा -->
+                <div class="police-card p-6 bg-gradient-to-br from-amber-950 to-slate-900 text-white">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/30 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-file-csv"></i>
+                    </div>
+                    <h3 class="text-lg font-bold">CSV द्वारे प्रश्न अपलोड</h3>
+                    <p class="text-xs text-slate-300 mt-1 mb-4">
+                        मराठी फॉन्टसह एकाच वेळी २५ ते १०० प्रश्न सेकंदात डेटाबेसमध्ये सेव्ह करा.
+                    </p>
+                    <button onclick="switchTab('csvUpload')" class="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+                        CSV अपलोड पॅनेलवर जा
+                    </button>
+                </div>
+
+                <!-- ३. विद्यार्थी मंजुरी -->
+                <div class="police-card p-6 bg-gradient-to-br from-emerald-950 to-slate-900 text-white">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/30 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <h3 class="text-lg font-bold">विद्यार्थी मंजुरी (Approvals)</h3>
+                    <p class="text-xs text-slate-300 mt-1 mb-4">
+                        नवीन रजिस्टर झालेल्या विद्यार्थ्यांचे अर्ज तपासा व त्वरित मंजुरी द्या.
+                    </p>
+                    <button onclick="switchTab('students')" class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition">
+                        विद्यार्थी यादी पहा
+                    </button>
+                </div>
+            </div>
+
+            <!-- अलीकडील नोंदणीकृत विद्यार्थी पूर्वावलोकन -->
+            <div class="police-card p-6 bg-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-base font-bold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-2 text-blue-600"></i>
+                        अलीकडील नोंदणी झालेले विद्यार्थी
+                    </h3>
+                    <button onclick="switchTab('students')" class="text-xs font-semibold text-blue-600 hover:underline">
+                        सर्व पहा <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">नाव</th>
+                                <th class="p-3">मोबाईल</th>
+                                <th class="p-3">भरती प्रकार</th>
+                                <th class="p-3">नोंदणी तारीख</th>
+                                <th class="p-3">स्थिती</th>
+                                <th class="p-3 text-right">कृती</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentStudentsTable" class="divide-y divide-slate-100">
+                            <tr><td colspan="6" class="p-4 text-center text-slate-400">विद्यार्थी लोड होत आहेत...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- टॅब २: विद्यार्थी व मंजुरी व्यवस्थापन (Students Management) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-students" class="hidden space-y-6">
+            <div class="police-card p-6 bg-white">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-900">विद्यार्थी व मंजुरी व्यवस्थापन</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            नवीन नोंदणी तपासून Approve, Reject किंवा Deactivate करा.
+                        </p>
+                    </div>
+
+                    <!-- शोध व फिल्टर -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="studentSearchInput" 
+                                onkeyup="renderStudentsTable()" 
+                                placeholder="नाव किंवा मोबाईलने शोधा..."
+                                class="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none w-48 sm:w-64"
+                            >
+                            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- स्थितीनुसार फिल्टर बटणे -->
+                <div class="flex flex-wrap gap-2 mb-4 border-b border-slate-200 pb-3 text-xs font-semibold">
+                    <button onclick="setStudentFilter('all')" id="filterBtn-all" class="px-3 py-1.5 rounded-md bg-slate-900 text-white">सर्व</button>
+                    <button onclick="setStudentFilter('pending')" id="filterBtn-pending" class="px-3 py-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        मंजुरी प्रलंबित (<span id="countPendingFilter">०</span>)
+                    </button>
+                    <button onclick="setStudentFilter('approved')" id="filterBtn-approved" class="px-3 py-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">मंजूर</button>
+                    <button onclick="setStudentFilter('rejected')" id="filterBtn-rejected" class="px-3 py-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">रद्द (Rejected)</button>
+                    <button onclick="setStudentFilter('deactivated')" id="filterBtn-deactivated" class="px-3 py-1.5 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">बंद (Deactivated)</button>
+                </div>
+
+                <!-- विद्यार्थी टेबल -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600 border border-slate-200 rounded-lg">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">विद्यार्थी नाव</th>
+                                <th class="p-3">मोबाईल (लॉगिन)</th>
+                                <th class="p-3">ईमेल</th>
+                                <th class="p-3">भरती प्रकार</th>
+                                <th class="p-3">नोंदणी तारीख</th>
+                                <th class="p-3">स्थिती</th>
+                                <th class="p-3 text-center">मंजुरी / कृती</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fullStudentsTable" class="divide-y divide-slate-100">
+                            <tr><td colspan="7" class="p-6 text-center text-slate-400">डेटा लोड होत आहे...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- टॅब ३: पेपर्स व्यवस्थापन (Papers Management) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-papers" class="hidden space-y-6">
+            <div class="police-card p-6 bg-white">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-900">सराव पेपर्स व्यवस्थापन</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            सर्व प्रश्नपत्रिका तयार करा, अपडेट करा, पब्लिश किंवा डिलीट करा.
+                        </p>
+                    </div>
+                    <button onclick="openPaperModal()" class="px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition flex items-center shadow-md">
+                        <i class="fa-solid fa-circle-plus mr-2"></i> नवीन पेपर तयार करा
+                    </button>
+                </div>
+
+                <!-- पेपर्स यादी -->
+                <div id="papersListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Papers rendered dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- टॅब ४: CSV प्रश्न अपलोड (CSV Import) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-csvUpload" class="hidden space-y-6">
+            <div class="police-card p-6 bg-white">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-900">CSV द्वारे मराठी प्रश्न अपलोड करा</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            तयार CSV फाईल निवडून सेकंदात संपूर्ण प्रश्नपत्रिका अपलोड करा.
+                        </p>
+                    </div>
+
+                    <!-- नमुना CSV डाऊनलोड बटन -->
+                    <button 
+                        onclick="downloadSampleCSV()" 
+                        class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center shadow-md"
+                    >
+                        <i class="fa-solid fa-download mr-2"></i> नमुना CSV टेम्प्लेट डाउनलोड करा (UTF-8 BOM)
+                    </button>
+                </div>
+
+                <!-- मराठी फॉन्ट व UTF-8 सूचना बॉक्स -->
+                <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 mb-6">
+                    <div class="font-bold flex items-center mb-1 text-amber-800 text-sm">
+                        <i class="fa-solid fa-circle-info mr-2 text-amber-600"></i>
+                        मराठी फॉन्ट व CSV सेव्ह करण्याविषयी महत्त्वाची सूचना:
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-xs text-amber-900 ml-1">
+                        <li>मराठी टाईपिंगसाठी <b>युनिकोड (Devanagari Unicode / Mangal Font)</b> वापरा.</li>
+                        <li>Microsoft Excel मध्ये फाईल सेव्ह करताना <b>'CSV UTF-8 (Comma delimited) (*.csv)'</b> हाच फॉरमॅट निवडा.</li>
+                        <li>Google Sheets वापरत असल्यास <b>File -> Download -> Comma-separated values (.csv)</b> डाऊनलोड करा.</li>
+                        <li>कॉलम नावे: <code class="bg-amber-100 px-1 py-0.5 rounded font-mono">subject, question_text, option_a, option_b, option_c, option_d, correct_option, explanation, image_url</code></li>
+                    </ul>
+                </div>
+
+                <!-- CSV अपलोड फॉर्म -->
+                <div class="p-6 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                    <!-- १. कोणत्या पेपरमध्ये टाकायचे? -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                            १. पेपर निवडा (Select Target Paper) *
+                        </label>
+                        <select id="csvTargetPaperSelect" class="w-full sm:w-96 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 bg-white font-medium">
+                            <!-- Paper options populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- २. फाईल निवडणे -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                            २. मराठी प्रश्नांची CSV फाईल निवडा (.csv) *
+                        </label>
+                        <input 
+                            type="file" 
+                            id="csvFileInput" 
+                            accept=".csv"
+                            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                        >
+                    </div>
+
+                    <div class="pt-2">
+                        <button 
+                            type="button" 
+                            id="previewCsvBtn" 
+                            onclick="handleParseCSV()"
+                            class="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition flex items-center"
+                        >
+                            <i class="fa-solid fa-table-list mr-2 text-amber-400"></i> प्रश्नांचे पूर्वावलोकन पहा (Preview)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CSV पूर्वावलोकन टेबल (Preview Section) -->
+                <div id="csvPreviewSection" class="hidden mt-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-list-check mr-2 text-emerald-600"></i>
+                            तपासणीसाठी प्रश्न यादी (<span id="previewCount">०</span> प्रश्न सापडले)
+                        </h3>
+                        <button 
+                            id="saveCsvQuestionsBtn" 
+                            onclick="commitCsvQuestions()" 
+                            class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-md flex items-center"
+                        >
+                            <i class="fa-solid fa-cloud-arrow-up mr-2"></i> डेटाबेसमध्ये सेव्ह करा (Save to Database)
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-96 overflow-y-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-100 text-slate-700 uppercase font-bold sticky top-0 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-2.5 w-10">क्र.</th>
+                                    <th class="p-2.5 w-32">विषय</th>
+                                    <th class="p-2.5">प्रश्न</th>
+                                    <th class="p-2.5">पर्याय अ</th>
+                                    <th class="p-2.5">पर्याय ब</th>
+                                    <th class="p-2.5">पर्याय क</th>
+                                    <th class="p-2.5">पर्याय ड</th>
+                                    <th class="p-2.5 w-16 text-center">उत्तर</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csvPreviewTableBody" class="divide-y divide-slate-100">
+                                <!-- Preview rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- टॅब ५: प्रश्न व इमेज व्यवस्थापन (Questions & Images) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-questions" class="hidden space-y-6">
+            <div class="police-card p-6 bg-white">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-900">प्रश्न संपादन व इमेज अपलोड</h2>
+                        <p class="text-xs text-slate-500 mt-1">
+                            प्रश्नात दुरुस्ती करा, आकृत्या/नकाशे जोडा किंवा नवीन प्रश्न मॅन्युअली जोडा.
+                        </p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openQuestionModal()" class="px-4 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs transition flex items-center shadow-md">
+                            <i class="fa-solid fa-plus mr-1.5"></i> मॅन्युअली नवीन प्रश्न जोडा
+                        </button>
+                    </div>
+                </div>
+
+                <!-- पेपर व विषय फिल्टर -->
+                <div class="flex flex-wrap items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200 mb-6 text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">पेपर निवडा:</label>
+                        <select id="filterQuestionPaperSelect" onchange="renderQuestionsList()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium w-60">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">विषय निवडा:</label>
+                        <select id="filterQuestionSubjectSelect" onchange="renderQuestionsList()" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium w-48">
+                            <option value="all">सर्व विषय</option>
+                            <option value="मराठी व्याकरण">मराठी व्याकरण</option>
+                            <option value="अंकगणित">अंकगणित</option>
+                            <option value="बुद्धिमत्ता चाचणी">बुद्धिमत्ता चाचणी</option>
+                            <option value="सामान्य ज्ञान व चालू घडामोडी">सामान्य ज्ञान व चालू घडामोडी</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- प्रश्नांची सूची -->
+                <div id="questionsContainer" class="space-y-4">
+                    <!-- Dynamic question cards -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- टॅब ६: तक्रारी व शंका (Flagged Doubts) -->
+        <!-- ============================================================ -->
+        <div id="tabContent-flags" class="hidden space-y-6">
+            <div class="police-card p-6 bg-white">
+                <div class="mb-6">
+                    <h2 class="text-xl font-extrabold text-slate-900">विद्यार्थ्यांच्या तक्रारी व शंका</h2>
+                    <p class="text-xs text-slate-500 mt-1">
+                        परीक्षार्थींनी 'चूक कळवा' बटनावरून नोंदवलेल्या प्रश्नांच्या शंकांचे निवारण करा.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600 border border-slate-200 rounded-lg">
+                        <thead class="bg-slate-50 text-slate-700 uppercase font-bold border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">विद्यार्थी नाव</th>
+                                <th class="p-3">पेपर नाव</th>
+                                <th class="p-3">प्रश्न</th>
+                                <th class="p-3">तक्रार / कारण</th>
+                                <th class="p-3">स्थिती</th>
+                                <th class="p-3 text-right">कृती</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flagsTableBody" class="divide-y divide-slate-100">
+                            <!-- Flags rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================================ -->
+    <!-- मोडेल्स (Modals) -->
+    <!-- ============================================================ -->
+
+    <!-- १. पेपर तयार / संपादन मोडल (Paper Modal) -->
+    <div id="paperModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="p-5 bg-gradient-to-r from-slate-900 to-blue-950 text-white flex items-center justify-between">
+                <h3 id="paperModalTitle" class="text-base font-bold">नवीन पेपर तयार करा</h3>
+                <button onclick="closePaperModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="paperForm" class="p-6 space-y-4 text-xs">
+                <input type="hidden" id="paperFormId">
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">पेपरचे नाव (Title) *</label>
+                    <input type="text" id="paperTitle" required placeholder="उदा. पोलीस भरती सराव पेपर - संच ०३" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">वर्णन (Description)</label>
+                    <textarea id="paperDescription" rows="2" placeholder="उदा. १०० गुणांचा आदर्श सराव संच..." class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">वेळ (मिनिटे) *</label>
+                        <input type="number" id="paperTime" required min="5" max="300" value="90" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">एकूण गुण *</label>
+                        <input type="number" id="paperMarks" required min="10" max="200" value="100" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-100 space-y-2">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="paperAllowRetake" checked class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-slate-700 font-medium">एकापेक्षा जास्त वेळा सोडवण्याची परवानगी द्या (Allow Retake)</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="paperShuffle" checked class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-slate-700 font-medium">प्रश्न शफलिंग (Question Shuffling) चालू ठेवा</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="paperLeaderboard" checked class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-slate-700 font-medium">बॅच रँक / गुणवत्ता यादी (Leaderboard) दाखवा</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="paperPublish" checked class="rounded text-blue-600 focus:ring-blue-500">
+                        <span class="text-slate-700 font-bold text-blue-700">विद्यार्थ्यांना लगेच पब्लिश करा (Publish)</span>
+                    </label>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-2">
+                    <button type="button" onclick="closePaperModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">रद्द करा</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-blue-700 hover:bg-blue-600 text-white font-bold transition">जतन करा (Save)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- २. प्रश्न मॅन्युअली जोडा / संपादन मोडल (Question Modal) -->
+    <div id="questionModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-slate-200 max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-gradient-to-r from-slate-900 to-purple-950 text-white flex items-center justify-between shrink-0">
+                <h3 id="questionModalTitle" class="text-base font-bold">नवीन प्रश्न जोडा</h3>
+                <button onclick="closeQuestionModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="questionForm" class="p-6 space-y-3.5 text-xs overflow-y-auto flex-grow">
+                <input type="hidden" id="qFormId">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">पेपर निवडा *</label>
+                        <select id="qFormPaper" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 bg-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">विषय निवडा *</label>
+                        <select id="qFormSubject" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 bg-white">
+                            <option value="मराठी व्याकरण">मराठी व्याकरण</option>
+                            <option value="अंकगणित">अंकगणित</option>
+                            <option value="बुद्धिमत्ता चाचणी">बुद्धिमत्ता चाचणी</option>
+                            <option value="सामान्य ज्ञान व चालू घडामोडी">सामान्य ज्ञान व चालू घडामोडी</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">प्रश्न मजकूर (Question Text) *</label>
+                    <textarea id="qFormText" rows="3" required placeholder="उदा. खालीलपैकी कोणता स्वर संयुक्त स्वर नाही?" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-purple-500 outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">पर्याय अ (Option A) *</label>
+                        <input type="text" id="qFormOptA" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">पर्याय ब (Option B) *</label>
+                        <input type="text" id="qFormOptB" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">पर्याय क (Option C) *</label>
+                        <input type="text" id="qFormOptC" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">पर्याय ड (Option D) *</label>
+                        <input type="text" id="qFormOptD" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">अचूक उत्तर (Correct Option) *</label>
+                        <select id="qFormCorrect" required class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 bg-white font-bold text-emerald-700">
+                            <option value="A">A (अ)</option>
+                            <option value="B">B (ब)</option>
+                            <option value="C">C (क)</option>
+                            <option value="D">D (ड)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">प्रश्न क्रम (Order)</label>
+                        <input type="number" id="qFormOrder" value="1" min="1" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">स्पष्टीकरण (Explanation)</label>
+                    <textarea id="qFormExplanation" rows="2" placeholder="उदा. या नियमानुसार हे उत्तर बरोबर आहे..." class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none"></textarea>
+                </div>
+
+                <!-- इमेज जोडणे / कॉम्प्रेस -->
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">प्रश्न इमेज / आकृती (ऐच्छिक)</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="file" id="qFormImageFile" accept="image/*" class="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-200 hover:file:bg-slate-300 cursor-pointer">
+                        <button type="button" onclick="clearQuestionImage()" id="clearImgBtn" class="text-xs text-rose-600 hover:underline hidden">इमेज काढा</button>
+                    </div>
+                    <div id="qFormImagePreview" class="mt-2 hidden">
+                        <img src="" alt="Question Image" class="h-24 rounded border border-slate-200 object-contain">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeQuestionModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">रद्द करा</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white font-bold transition">जतन करा (Save)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ३. Supabase सेटिंग्ज मोडल (Supabase Key & Config Modal) -->
+    <div id="supabaseModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="p-5 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-database text-amber-400"></i>
+                    <h3 class="text-base font-bold">Supabase डेटाबेस सेटिंग्ज</h3>
+                </div>
+                <button onclick="closeSupabaseModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <p class="text-slate-600 leading-relaxed">
+                    जर तुमची Supabase Anon Key एक्सपायर झाली असेल किंवा नवीन प्रोजेक्ट जोडायचा असेल, तर तुम्ही थेट येथे नवीन URL आणि Key सेव्ह करू शकता:
+                </p>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Supabase Project URL</label>
+                    <input type="text" id="settingSupabaseUrl" placeholder="https://your-project.supabase.co" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 font-mono outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 uppercase mb-1">Supabase Anon / Public Key</label>
+                    <textarea id="settingSupabaseKey" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 font-mono outline-none"></textarea>
+                </div>
+
+                <div class="p-3 bg-blue-50 rounded-lg text-blue-900 text-[11px] leading-relaxed">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    ही माहिती तुमच्या स्थानिक ब्राउझरमध्ये सुरक्षित सेव्ह होते आणि थेट Supabase शी जोडली जाते.
+                </div>
+
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeSupabaseModal()" class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition">बंद करा</button>
+                    <button type="button" onclick="saveSupabaseSettings()" class="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition">सेव्ह करा व रीलोड करा</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ४. फूटर -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800">
+        महाराष्ट्र पोलीस भरती सराव परीक्षा पोर्टल - ॲडमिन कन्सोल &copy; २०२५-२०२६.
+    </footer>
+
+    <!-- Supabase आणि ॲडमिन स्क्रिप्ट्स -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
