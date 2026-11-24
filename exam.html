@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सराव परीक्षा सुरू आहे | महाराष्ट्र पोलीस भरती परीक्षा पोर्टल</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Google Fonts & Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col select-none">
+
+    <!-- १. परीक्षा मुख्य हेडर व टाइमर (Exam Top Bar) -->
+    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
+            <!-- पेपर नाव व विद्यार्थी -->
+            <div class="flex items-center space-x-3 truncate mr-2">
+                <div class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                    <i class="fa-solid fa-pen-clip"></i>
+                </div>
+                <div class="truncate">
+                    <h1 id="examPaperTitle" class="font-extrabold text-sm sm:text-base leading-tight truncate text-white">
+                        सराव परीक्षा लोड होत आहे...
+                    </h1>
+                    <p class="text-[11px] text-amber-300 font-medium truncate" id="examCandidateName">
+                        उमेदवार: लोड होत आहे...
+                    </p>
+                </div>
+            </div>
+
+            <!-- काउंटडाऊन टाइमर व सबमिट बटन -->
+            <div class="flex items-center space-x-2 sm:space-x-4 shrink-0">
+                <!-- टाइमर बॉक्स -->
+                <div id="timerContainer" class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-white shadow-inner">
+                    <i class="fa-solid fa-stopwatch text-amber-400 text-sm"></i>
+                    <div>
+                        <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">उर्वरित वेळ</div>
+                        <div id="examTimer" class="font-mono font-extrabold text-base sm:text-lg text-amber-400 leading-tight">
+                            --:--
+                        </div>
+                    </div>
+                </div>
+
+                <!-- सबमिट बटन -->
+                <button 
+                    onclick="confirmSubmitExam()" 
+                    class="px-3.5 py-2 sm:px-5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm transition shadow-md flex items-center space-x-1.5"
+                >
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>पेपर सबमिट करा</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- २. विषयनिहाय टॅब्स (Subject Filter Tabs) -->
+        <div class="bg-slate-950 border-t border-slate-800/80 px-4 sm:px-6 overflow-x-auto">
+            <div id="subjectTabsContainer" class="flex space-x-1 sm:space-x-2 py-1.5 min-w-max text-xs font-semibold">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </header>
+
+    <!-- २. मुख्य परीक्षा क्षेत्र (Exam Body) -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- डावा भाग: मुख्य प्रश्न पॅनेल (Left: 8 Cols) -->
+        <div class="lg:col-span-8 flex flex-col justify-between space-y-4">
+            <div class="police-card p-5 sm:p-7 bg-white flex-grow flex flex-col justify-between shadow-sm border border-slate-200">
+                <div>
+                    <!-- प्रश्न हेडर -->
+                    <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span id="currentQNumberBadge" class="px-2.5 py-1 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">
+                                प्रश्न -- / --
+                            </span>
+                            <span id="currentQSubjectBadge" class="px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 font-bold text-xs">
+                                विषय: --
+                            </span>
+                        </div>
+                        <span class="text-xs font-bold text-slate-500">गुण: +१.०० | निगेटिव्ह: नाही</span>
+                    </div>
+
+                    <!-- प्रश्न मजकूर (Devanagari Unicode) -->
+                    <div class="text-slate-900 font-bold text-base sm:text-lg leading-relaxed mb-4" id="questionText">
+                        प्रश्न लोड होत आहे...
+                    </div>
+
+                    <!-- आकृती / इमेज (असल्यास) -->
+                    <div id="questionImageContainer" class="mb-5 hidden">
+                        <img id="questionImage" src="" alt="Question Image" class="max-h-56 rounded-xl border border-slate-200 object-contain shadow-sm cursor-pointer" onclick="viewLargeImage(this.src)">
+                        <span class="text-[10px] text-slate-400 mt-1 block">मोठा फोटो पाहण्यासाठी क्लिक करा</span>
+                    </div>
+
+                    <!-- ४ पर्याय (Options A, B, C, D) -->
+                    <div class="space-y-3 mt-4" id="optionsContainer">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- तळाची नियंत्रण बटने (Bottom Controls) -->
+                <div class="pt-6 mt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center space-x-2">
+                        <button 
+                            onclick="prevQuestion()" 
+                            id="prevBtn"
+                            class="px-3.5 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition flex items-center"
+                        >
+                            <i class="fa-solid fa-chevron-left mr-1.5"></i> मागील
+                        </button>
+                        <button 
+                            onclick="clearCurrentSelection()" 
+                            class="px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-600 font-semibold text-xs transition"
+                        >
+                            निवड काढा
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button 
+                            onclick="markForReviewAndNext()" 
+                            class="px-3.5 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs transition flex items-center"
+                        >
+                            <i class="fa-solid fa-bookmark mr-1.5"></i> नंतर तपासा (Review)
+                        </button>
+                        <button 
+                            onclick="saveAndNext()" 
+                            id="saveNextBtn"
+                            class="px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs transition shadow-md flex items-center"
+                        >
+                            <span>जतन करा व पुढील</span> <i class="fa-solid fa-chevron-right ml-1.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- उजवा भाग: प्रश्न पॅलेट (Right: 4 Cols) -->
+        <div class="lg:col-span-4 space-y-4">
+            <div class="police-card p-5 bg-white border border-slate-200">
+                <!-- पॅलेट हेडिंग -->
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
+                    <span>प्रश्न पॅलेट (Question Palette)</span>
+                    <span id="paletteCountSummary" class="text-blue-600 font-bold">-- / --</span>
+                </h3>
+
+                <!-- रंग खूण इंडिकेटर्स (Legend) -->
+                <div class="grid grid-cols-2 gap-2 text-[11px] pb-3 border-b border-slate-100 mb-3 font-medium">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-400 shrink-0"></span>
+                        <span class="truncate">सोडवला (<b id="countAnswered">०</b>)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-3.5 h-3.5 rounded bg-rose-100 border border-rose-400 shrink-0"></span>
+                        <span class="truncate">सोडवला नाही (<b id="countNotAnswered">०</b>)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-3.5 h-3.5 rounded bg-purple-100 border border-purple-400 shrink-0"></span>
+                        <span class="truncate">नंतर तपासायचा (<b id="countMarkedReview">०</b>)</span>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 shrink-0"></span>
+                        <span class="truncate">अजून पाहिला नाही (<b id="countNotVisited">०</b>)</span>
+                    </div>
+                </div>
+
+                <!-- नंबर बटन्स ग्रिड (1 to N) -->
+                <div id="paletteGrid" class="grid grid-cols-5 gap-2 max-h-80 overflow-y-auto p-1">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- मदत टीप -->
+            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
+                <i class="fa-solid fa-shield-halved text-amber-600 mr-1"></i>
+                <b>ऑटो-सेव्ह सुरक्षितता:</b> तुम्ही निवडलेला प्रत्येक पर्याय तत्काळ सेव्ह होतो. नेटवर्क गेले तरी उत्तरे सुरक्षित राहतील.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ३. सबमिशन सारांश मोडल (Confirm Submit Modal) -->
+    <div id="submitConfirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="p-5 bg-gradient-to-r from-slate-900 to-blue-950 text-white flex items-center justify-between">
+                <h3 class="text-base font-bold flex items-center">
+                    <i class="fa-solid fa-clipboard-check text-amber-400 mr-2"></i>
+                    पेपर सबमिट करायचा आहे का?
+                </h3>
+                <button onclick="closeSubmitModal()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs">
+                <p class="text-slate-600 leading-relaxed">
+                    पेपर सबमिट केल्यानंतर उत्तरे बदलता येणार नाहीत. तुमचा निकाल आणि विषयनिहाय विश्लेषण त्वरित तयार केले जाईल.
+                </p>
+
+                <!-- आकडेवारी तक्ता -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 font-medium">
+                    <div class="flex justify-between">
+                        <span>एकूण प्रश्न:</span>
+                        <b class="text-slate-900" id="modalTotalQ">--</b>
+                    </div>
+                    <div class="flex justify-between text-emerald-700">
+                        <span>सोडवलेले प्रश्न (Answered):</span>
+                        <b id="modalAnsweredQ">--</b>
+                    </div>
+                    <div class="flex justify-between text-rose-700">
+                        <span>सोडवले नसलेले (Unattempted):</span>
+                        <b id="modalUnattemptedQ">--</b>
+                    </div>
+                    <div class="flex justify-between text-purple-700">
+                        <span>नंतर तपासण्यासाठी ठेवलेले (Review):</span>
+                        <b id="modalReviewQ">--</b>
+                    </div>
+                </div>
+
+                <div class="pt-3 flex space-x-2">
+                    <button type="button" onclick="closeSubmitModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+                        सराव सुरू ठेवा
+                    </button>
+                    <button type="button" id="finalSubmitBtn" onclick="performFinalSubmission()" class="w-1/2 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-md">
+                        होय, सबमिट करा
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ४. मोठी इमेज पाहण्यासाठी मोडल -->
+    <div id="imageViewerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden" onclick="this.classList.add('hidden')">
+        <div class="relative max-w-3xl max-h-[90vh]">
+            <img id="largeImageSrc" src="" alt="Zoomed Image" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl">
+            <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Supabase आणि स्क्रिप्ट्स -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="exam.js"></script>
+</body>
+</html>
