@@ -462,13 +462,13 @@ const DB = {
         const cleanId = identifier.trim();
         const pwdHash = await hashPassword(plainPassword);
 
-        if (isSupabaseActive) {
+        if (isSupabaseActive && supabase) {
             try {
                 let query = supabase.from('students').select('*');
                 if (/^\d{10}$/.test(cleanId)) {
                     query = query.eq('mobile', cleanId);
                 } else {
-                    query = query.eq('email', cleanId.toLowerCase());
+                    query = query.ilike('email', cleanId);
                 }
 
                 const { data, error } = await query;
@@ -543,13 +543,27 @@ const DB = {
         const cleanMobile = mobile.trim();
         const cleanEmail = email.trim().toLowerCase();
 
-        if (isSupabaseActive) {
+        if (isSupabaseActive && supabase) {
             try {
+                // १. प्रथम सुरक्षित RPC फंक्शनद्वारे पडताळणी
+                try {
+                    const { data: rpcData, error: rpcError } = await supabase.rpc('verify_mobile_email', {
+                        p_mobile: cleanMobile,
+                        p_email: cleanEmail
+                    });
+                    if (!rpcError && typeof rpcData === 'boolean') {
+                        if (rpcData) return true;
+                    }
+                } catch (rpcErr) {
+                    console.warn("RPC verify_mobile_email दुर्लक्षित:", rpcErr);
+                }
+
+                // २. थेट SELECT पडताळणी (केस-इन्सेंसिटिव्ह ईमेल)
                 const { data, error } = await supabase
                     .from('students')
                     .select('id, full_name, mobile, email')
                     .eq('mobile', cleanMobile)
-                    .eq('email', cleanEmail);
+                    .ilike('email', cleanEmail);
                 if (error) throw error;
                 return (data && data.length > 0);
             } catch (err) {
@@ -567,13 +581,28 @@ const DB = {
         const cleanEmail = email.trim().toLowerCase();
         const newHash = await hashPassword(newPassword);
 
-        if (isSupabaseActive) {
+        if (isSupabaseActive && supabase) {
             try {
+                // १. प्रथम सुरक्षित RPC द्वारे थेट पासवर्ड अपडेट
+                try {
+                    const { data: rpcData, error: rpcError } = await supabase.rpc('reset_password_by_mobile_email', {
+                        p_mobile: cleanMobile,
+                        p_email: cleanEmail,
+                        p_new_password_hash: newHash
+                    });
+                    if (!rpcError && rpcData === true) {
+                        return { success: true };
+                    }
+                } catch (rpcErr) {
+                    console.warn("RPC reset_password_by_mobile_email दुर्लक्षित:", rpcErr);
+                }
+
+                // २. थेट UPDATE पडताळणी
                 const { data, error } = await supabase
                     .from('students')
                     .update({ password_hash: newHash, updated_at: new Date().toISOString() })
                     .eq('mobile', cleanMobile)
-                    .eq('email', cleanEmail)
+                    .ilike('email', cleanEmail)
                     .select();
                 if (error) throw error;
                 if (data && data.length > 0) return { success: true };
@@ -591,7 +620,7 @@ const DB = {
             return { success: true };
         }
 
-        return { success: false, message: 'माहिती जुळली नाही.' };
+        return { success: false, message: 'नोंदणीकृत मोबाईल नंबर व ईमेल जुळले नाहीत. कृपया खात्री करा.' };
     },
 
     // --- ॲडमिन: सर्व विद्यार्थी मिळवणे ---
@@ -991,35 +1020,6 @@ const DB = {
                 const { data, error } = await supabase.from('attempts').insert([attemptRecord]).select();
                 if (error) throw error;
                 return { success: true, attempt: data ? data[0] : attemptRecord };
-            } catch (err) {
-                console.error("Supabase Submit Attempt Error:", err);
-            }
-        }
-
-        const attempts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.ATTEMPTS) || '[]');
-        attempts.push(attemptRecord);
-        localStorage.setItem(LOCAL_STORAGE_KEYS.ATTEMPTS, JSON.stringify(attempts));
-        return { success: true, attempt: attemptRecord };
-    },
-            student_id: studentId,
-            paper_id: paperId,
-            total_questions: totalQuestions,
-            correct_count: correctCount,
-            wrong_count: wrongCount,
-            unattempted_count: unattemptedCount,
-            total_score: totalScore,
-            percentage: percentage,
-            time_taken_seconds: timeTakenSeconds,
-            answers_json: answers,
-            subject_analysis_json: subjectAnalysis,
-            created_at: new Date().toISOString()
-        };
-
-        if (isSupabaseActive) {
-            try {
-                const { data, error } = await supabase.from('attempts').insert([attemptRecord]).select();
-                if (error) throw error;
-                return { success: true, attempt: data[0] };
             } catch (err) {
                 console.error("Supabase Submit Attempt Error:", err);
             }
