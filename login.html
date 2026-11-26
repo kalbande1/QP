@@ -101,23 +101,6 @@
                 </div>
             </form>
 
-            <!-- ॲडमिन डेमो माहिती कार्ड -->
-            <div class="px-6 pb-4">
-                <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
-                    <div class="font-bold flex items-center mb-1">
-                        <i class="fa-solid fa-circle-info mr-1.5 text-amber-600"></i>
-                        प्रशासकीय (Admin) डेमो लॉगिन माहिती:
-                    </div>
-                    <div class="flex justify-between items-center text-[11px] text-amber-800">
-                        <span>मोबाईल: <b>9999999999</b></span>
-                        <span>पासवर्ड: <b>admin123</b></span>
-                        <button type="button" id="fillAdminCreds" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-950 px-2 py-0.5 rounded font-semibold transition">
-                            ऑटो-भरा
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <!-- कार्ड तळटीप -->
             <div class="p-4 bg-slate-50 border-t border-slate-200 text-center text-xs text-slate-600">
                 नवीन विद्यार्थी आहात का? 
@@ -141,19 +124,12 @@
         const passwordInput = document.getElementById('password');
         const togglePassword = document.getElementById('togglePassword');
         const toggleIcon = document.getElementById('toggleIcon');
-        const fillAdminCreds = document.getElementById('fillAdminCreds');
 
         // पासवर्ड लपवा / दाखवा
         togglePassword.addEventListener('click', () => {
             const isPassword = passwordInput.getAttribute('type') === 'password';
             passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
             toggleIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
-        });
-
-        // ॲडमिन डेमो क्रेडेन्शियल ऑटो-भरणे
-        fillAdminCreds.addEventListener('click', () => {
-            identifierInput.value = '9999999999';
-            passwordInput.value = 'admin123';
         });
 
         loginForm.addEventListener('submit', async (e) => {
