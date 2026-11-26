@@ -558,6 +558,20 @@ function downloadSampleCSV() {
     document.body.removeChild(link);
 }
 
+// नवीन पेपर vs विद्यमान पेपर मोड टॉगल करणे
+function togglePaperUploadMode() {
+    const mode = document.querySelector('input[name="paperUploadMode"]:checked')?.value || 'existing';
+    const existingGroup = document.getElementById('existingPaperGroup');
+    const newGroup = document.getElementById('newPaperGroup');
+    if (mode === 'new') {
+        if (existingGroup) existingGroup.classList.add('hidden');
+        if (newGroup) newGroup.classList.remove('hidden');
+    } else {
+        if (existingGroup) existingGroup.classList.remove('hidden');
+        if (newGroup) newGroup.classList.add('hidden');
+    }
+}
+
 // CSV फाईल वाचणे व पार्स करणे (UTF-8 Unicode Safe)
 function handleParseCSV() {
     const fileInput = document.getElementById('csvFileInput');
@@ -586,27 +600,66 @@ function handleParseCSV() {
         // पूर्वावलोकन दाखवणे
         const previewSection = document.getElementById('csvPreviewSection');
         const previewCount = document.getElementById('previewCount');
-        const previewTbody = document.getElementById('csvPreviewTableBody');
 
-        previewCount.textContent = parsedCsvQuestions.length;
-        previewTbody.innerHTML = parsedCsvQuestions.map((q, idx) => `
-            <tr class="hover:bg-slate-50">
-                <td class="p-2 font-bold">${idx + 1}</td>
-                <td class="p-2"><span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 text-[10px] font-semibold">${escapeHtml(q.subject)}</span></td>
-                <td class="p-2 font-medium max-w-xs truncate" title="${escapeHtml(q.question_text)}">${escapeHtml(q.question_text)}</td>
-                <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_a)}</td>
-                <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_b)}</td>
-                <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_c)}</td>
-                <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_d)}</td>
-                <td class="p-2 text-center font-bold text-emerald-700">${escapeHtml(q.correct_option)}</td>
-            </tr>
-        `).join('');
+        if (previewCount) previewCount.textContent = parsedCsvQuestions.length;
+        renderCsvPreviewTable();
 
-        previewSection.classList.remove('hidden');
-        previewSection.scrollIntoView({ behavior: 'smooth' });
+        if (previewSection) {
+            previewSection.classList.remove('hidden');
+            previewSection.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     reader.readAsText(file, 'UTF-8');
+}
+
+// CSV पूर्वावलोकन टेबल रेंडर करणे (इमेज अपलोड पर्यायासह)
+function renderCsvPreviewTable() {
+    const previewTbody = document.getElementById('csvPreviewTableBody');
+    if (!previewTbody) return;
+
+    previewTbody.innerHTML = parsedCsvQuestions.map((q, idx) => `
+        <tr class="hover:bg-slate-50">
+            <td class="p-2 font-bold">${idx + 1}</td>
+            <td class="p-2"><span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 text-[10px] font-semibold">${escapeHtml(q.subject)}</span></td>
+            <td class="p-2 font-medium max-w-xs truncate" title="${escapeHtml(q.question_text)}">${escapeHtml(q.question_text)}</td>
+            <td class="p-2 text-center">
+                ${q.image_url ? `
+                    <div class="flex items-center justify-center space-x-1">
+                        <img src="${q.image_url}" class="w-8 h-8 rounded border object-contain shadow-xs" title="इमेज संलग्न">
+                        <button type="button" onclick="removePreviewImage(${idx})" class="text-rose-500 hover:text-rose-700 text-xs" title="इमेज काढा"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                ` : `
+                    <label class="px-2 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 cursor-pointer font-bold text-[10px] inline-flex items-center">
+                        <i class="fa-solid fa-camera mr-1"></i> इमेज जोडा
+                        <input type="file" accept="image/*" class="hidden" onchange="attachImageToPreviewRow(${idx}, this)">
+                    </label>
+                `}
+            </td>
+            <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_a)}</td>
+            <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_b)}</td>
+            <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_c)}</td>
+            <td class="p-2 truncate max-w-xs">${escapeHtml(q.option_d)}</td>
+            <td class="p-2 text-center font-bold text-emerald-700">${escapeHtml(q.correct_option)}</td>
+        </tr>
+    `).join('');
+}
+
+// पूर्वावलोकनातील प्रश्नाला थेट इमेज जोडणे
+async function attachImageToPreviewRow(index, input) {
+    if (!input.files || !input.files[0]) return;
+    try {
+        const compressed = await compressImageToDataUrl(input.files[0]);
+        parsedCsvQuestions[index].image_url = compressed.dataUrl;
+        renderCsvPreviewTable();
+    } catch (e) {
+        Swal.fire('त्रुटी', 'इमेज कॉम्प्रेस करताना अडचण आली.', 'error');
+    }
+}
+
+function removePreviewImage(index) {
+    parsedCsvQuestions[index].image_url = '';
+    renderCsvPreviewTable();
 }
 
 // सुरक्षित CSV पार्सर (Commas inside quotes & newlines)
@@ -686,12 +739,45 @@ function parseCSVText(csvString) {
     return result;
 }
 
-// पार्स केलेले प्रश्न डेटाबेसमध्ये सेव्ह करणे
+// पार्स केलेले प्रश्न डेटाबेसमध्ये सेव्ह करणे व विद्यार्थ्यांसाठी आपोआप पब्लिश करणे
 async function commitCsvQuestions() {
-    const targetPaperId = document.getElementById('csvTargetPaperSelect')?.value;
-    if (!targetPaperId) {
-        Swal.fire('पेपर निवडा', 'कृपया प्रश्न जोडण्यासाठी पेपर निवडा.', 'warning');
-        return;
+    const uploadMode = document.querySelector('input[name="paperUploadMode"]:checked')?.value || 'existing';
+    let targetPaperId = '';
+
+    if (uploadMode === 'new') {
+        const newTitle = document.getElementById('csvNewPaperTitle')?.value.trim();
+        const newTime = document.getElementById('csvNewPaperTime')?.value || 90;
+        const newMarks = document.getElementById('csvNewPaperMarks')?.value || 100;
+
+        if (!newTitle) {
+            Swal.fire('पेपरचे नाव टाका', 'कृपया नवीन पेपरचे नाव प्रविष्ट करा.', 'warning');
+            return;
+        }
+
+        // नवीन पेपर तयार करणे (is_published = true)
+        const createRes = await DB.savePaper({
+            title: newTitle,
+            description: 'CSV द्वारे तयार केलेला सराव पेपर.',
+            time_minutes: newTime,
+            total_marks: newMarks,
+            allow_retake: true,
+            shuffle_questions: true,
+            show_leaderboard: true,
+            is_published: true
+        });
+
+        if (!createRes.success || !createRes.paper) {
+            Swal.fire('त्रुटी', 'नवीन पेपर तयार करता आला नाही: ' + (createRes.message || ''), 'error');
+            return;
+        }
+
+        targetPaperId = createRes.paper.id;
+    } else {
+        targetPaperId = document.getElementById('csvTargetPaperSelect')?.value;
+        if (!targetPaperId) {
+            Swal.fire('पेपर निवडा', 'कृपया प्रश्न जोडण्यासाठी पेपर निवडा.', 'warning');
+            return;
+        }
     }
 
     if (parsedCsvQuestions.length === 0) {
@@ -701,7 +787,7 @@ async function commitCsvQuestions() {
 
     const saveBtn = document.getElementById('saveCsvQuestionsBtn');
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> डेटाबेसमध्ये सेव्ह होत आहे...';
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> डेटाबेसमध्ये सेव्ह व पब्लिश होत आहे...';
 
     try {
         const res = await DB.importQuestionsBatch(targetPaperId, parsedCsvQuestions);
@@ -709,23 +795,27 @@ async function commitCsvQuestions() {
         if (res.success) {
             Swal.fire({
                 icon: 'success',
-                title: 'प्रश्न यशस्वीरित्या सेव्ह झाले!',
-                text: `एकूण ${res.count} प्रश्न पोर्टलमध्ये जोडले गेले आहेत.`,
+                title: 'पेपर व प्रश्न यशस्वीरित्या सेव्ह झाले!',
+                text: `एकूण ${res.count} प्रश्न जोडले गेले असून हा पेपर विद्यार्थ्यांच्या डॅशबोर्डवर आपोआप पब्लिश झाला आहे!`,
                 confirmButtonColor: '#10b981'
             }).then(() => {
                 document.getElementById('csvPreviewSection').classList.add('hidden');
                 document.getElementById('csvFileInput').value = '';
+                const newTitleInput = document.getElementById('csvNewPaperTitle');
+                if (newTitleInput) newTitleInput.value = '';
                 parsedCsvQuestions = [];
                 goToPaperQuestions(targetPaperId);
             });
             await loadAllAdminData();
+        } else {
+            Swal.fire('त्रुटी', res.message || 'प्रश्न सेव्ह करताना अडचण आली.', 'error');
         }
     } catch (err) {
         console.error(err);
-        Swal.fire('त्रुटी', 'प्रश्न सेव्ह करताना अडचण आली.', 'error');
+        Swal.fire('त्रुटी', 'प्रश्न सेव्ह करताना अडचण आली: ' + (err.message || ''), 'error');
     } finally {
         saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> डेटाबेसमध्ये सेव्ह करा (Save to Database)';
+        saveBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> डेटाबेसमध्ये सेव्ह करा व पब्लिश करा';
     }
 }
 
@@ -775,8 +865,12 @@ function renderQuestionsList() {
                     <h4 class="text-sm font-bold text-slate-900 leading-relaxed">${escapeHtml(q.question_text)}</h4>
 
                     ${q.image_url ? `
-                        <div class="my-2.5">
-                            <img src="${q.image_url}" alt="Question Image" class="max-h-40 rounded-lg border border-slate-200 shadow-sm object-contain">
+                        <div class="my-3 p-2 bg-slate-50 rounded-xl border border-slate-200 inline-block">
+                            <div class="text-[10px] font-bold text-slate-500 uppercase mb-1">संलग्न आकृती / इमेज:</div>
+                            <img src="${q.image_url}" alt="Question Image" class="max-h-48 rounded-lg border border-slate-300 shadow-sm object-contain">
+                            <button type="button" onclick="removeQuestionImageDirect('${q.id}')" class="mt-1 text-xs text-rose-600 hover:text-rose-800 font-semibold flex items-center">
+                                <i class="fa-solid fa-trash-can mr-1"></i> इमेज काढून टाका
+                            </button>
                         </div>
                     ` : ''}
 
@@ -808,21 +902,32 @@ function renderQuestionsList() {
                 </div>
 
                 <!-- कृती बटने -->
-                <div class="flex flex-col space-y-1 shrink-0">
-                    <button onclick="editQuestion('${q.id}')" title="प्रश्न संपादन करा" class="p-2 rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-700 transition">
-                        <i class="fa-solid fa-pen-to-square"></i>
+                <div class="flex flex-col space-y-1.5 shrink-0">
+                    <button onclick="editQuestion('${q.id}')" title="प्रश्न संपादन करा" class="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition flex items-center">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> संपादन
                     </button>
-                    <label title="ऑटो-कॉम्प्रेस इमेज जोडा" class="p-2 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 transition cursor-pointer">
-                        <i class="fa-solid fa-image"></i>
+                    <label class="px-2.5 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs transition cursor-pointer flex items-center border border-purple-200">
+                        <i class="fa-solid fa-camera mr-1"></i> ${q.image_url ? 'इमेज बदला' : 'इमेज जोडा'}
                         <input type="file" accept="image/*" class="hidden" onchange="handleDirectQuestionImageUpload('${q.id}', this)">
                     </label>
-                    <button onclick="deleteQuestion('${q.id}')" title="प्रश्न हटवा" class="p-2 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-700 transition">
-                        <i class="fa-solid fa-trash-can"></i>
+                    <button onclick="deleteQuestion('${q.id}')" title="प्रश्न हटवा" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center">
+                        <i class="fa-solid fa-trash-can mr-1"></i> हटवा
                     </button>
                 </div>
             </div>
         </div>
     `).join('');
+}
+
+// थेट प्रश्न इमेज काढणे
+async function removeQuestionImageDirect(questionId) {
+    const q = allQuestions.find(item => item.id === questionId);
+    if (!q) return;
+
+    q.image_url = '';
+    await DB.saveQuestion(q);
+    await loadAllAdminData();
+    Swal.fire({ icon: 'success', title: 'इमेज काढली गेली', timer: 1000, showConfirmButton: false });
 }
 
 // थेट इमेज अपलोड व WebP ऑटो-कॉम्प्रेस
