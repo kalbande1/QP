@@ -181,7 +181,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'त्रुटी',
-                    text: 'लॉगिन करताना तांत्रिक अडचण आली.',
+                    text: (err && err.message) ? err.message : 'लॉगिन करताना तांत्रिक अडचण आली.',
                     confirmButtonColor: '#dc2626',
                     confirmButtonText: 'ठीक आहे'
                 });
