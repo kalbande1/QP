@@ -104,10 +104,17 @@
                             id="paperSearchInput" 
                             onkeyup="filterPapers()"
                             placeholder="पेपरचे नाव शोधा..."
-                            class="pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 outline-none w-56 sm:w-64 bg-white"
+                            class="pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 outline-none w-48 sm:w-64 bg-white"
                         >
                         <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400 text-xs"></i>
                     </div>
+                    <button 
+                        onclick="loadDashboardData()" 
+                        title="नवीन पेपर्स तपासा (Refresh)"
+                        class="px-3 py-2 text-xs rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition flex items-center"
+                    >
+                        <i class="fa-solid fa-rotate mr-1"></i> रिफ्रेश
+                    </button>
                 </div>
             </div>
 
@@ -200,11 +207,16 @@
                         <div>
                             <!-- बॅज व कालावधी -->
                             <div class="flex items-center justify-between mb-3 text-xs">
-                                <span class="px-2.5 py-1 rounded-md font-bold ${isAttempted ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
-                                    <i class="fa-solid ${isAttempted ? 'fa-circle-check text-emerald-600' : 'fa-star text-blue-600'} mr-1"></i>
-                                    ${isAttempted ? 'सोडवला आहे' : 'नवीन सराव संच'}
-                                </span>
-                                <span class="font-semibold text-slate-500 flex items-center">
+                                ${isAttempted ? `
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white shadow-sm">
+                                        <i class="fa-solid fa-circle-check mr-1.5 text-emerald-200"></i> Solved (सोडवला)
+                                    </span>
+                                ` : `
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200">
+                                        <i class="fa-solid fa-file-pen mr-1.5 text-blue-600"></i> नवीन सराव संच
+                                    </span>
+                                `}
+                                <span class="font-semibold text-slate-500 flex items-center bg-slate-50 px-2 py-1 rounded border border-slate-100">
                                     <i class="fa-regular fa-clock mr-1 text-slate-400"></i> ${paper.time_minutes} मिनिटे
                                 </span>
                             </div>
